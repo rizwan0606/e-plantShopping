@@ -1,62 +1,51 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
-const cartSlice = createSlice({
-  name: "cart",
-  initialState: {
-    items: [], // Initial cart state is an empty array
-  },
-  reducers: {
-    addItem: (state, action) => {
-      const newItem = action.payload;
-      const existingItem = state.items.find(
-        (item) => item.name === newItem.name
-      );
+export const CartSlice = createSlice({
+    name: 'cart',
+    initialState: {
+        items: [], // Initialize items as an empty array
+        numOfItems: 0 // Number of items multiplied by their quantity
+    },
 
-      if (existingItem) {
-        existingItem.quantity = (existingItem.quantity || 1) + 1;
-      } else {
-        state.items.push({ ...newItem, quantity: 1 });
-      }
-    },
-    removeItem: (state, action) => {
-      const itemName = action.payload;
-      state.items = state.items.filter((item) => item.name !== itemName);
-    },
-    clearCart: (state) => {
-      state.items = [];
-    },
-    updateQuantity: (state, action) => {
-      const { name, quantity } = action.payload;
-      const existingItem = state.items.find((item) => item.name === name);
+    reducers: {
+        addItem: (state, action) => {
+            const { name, image, cost } = action.payload;
+            const existingItem = state.items.find(item => item.name === name);
 
-      if (existingItem) {
-        existingItem.quantity = Math.max(1, quantity);
-      }
+            if (existingItem) {
+                // In existing items, quantity is already added as property
+                existingItem.quantity++;
+            } else {
+                state.items.push({ name, image, cost, quantity: 1 });
+            }
+
+            state.numOfItems += 1;
+        },
+
+        removeItem: (state, action) => {
+            const { name, quantity } = action.payload;
+            state.items = state.items.filter(item => item.name !== name);
+            state.numOfItems -= quantity;
+
+            // Just to be sure... I hate negative numbers
+            if (state.numOfItems < 0) {
+                state.numOfItems = 0;
+            }
+        },
+
+        updateQuantity: (state, action) => {
+            const { name, quantity } = action.payload;
+            const existingItem = state.items.find(item => item.name === name);
+
+            if (existingItem) {
+                const differenceQuantity = quantity - existingItem.quantity;
+                state.numOfItems += differenceQuantity;
+                existingItem.quantity = quantity;
+            }
+        },
     },
-    incrementQuantity: (state, action) => {
-      const name = action.payload.name;
-      const existingItem = state.items.find((item) => item.name === name);
-      if (existingItem) {
-        existingItem.quantity += 1;
-      }
-    },
-    decrementQuantity: (state, action) => {
-      const name = action.payload.name;
-      const existingItem = state.items.find((item) => item.name === name);
-      if (existingItem) {
-        existingItem.quantity = Math.max(1, existingItem.quantity - 1);
-      }
-    },
-  },
 });
 
-export const {
-  addItem,
-  removeItem,
-  clearCart,
-  updateQuantity,
-  incrementQuantity,
-  decrementQuantity,
-} = cartSlice.actions;
+export const { addItem, removeItem, updateQuantity } = CartSlice.actions;
 
-export default cartSlice.reducer;
+export default CartSlice.reducer;
